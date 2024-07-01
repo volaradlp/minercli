@@ -5,7 +5,6 @@ import requests
 import json
 import datetime as dt
 
-from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 
 from constants import TMP_DRIVE_AUTH, VOLARA_API

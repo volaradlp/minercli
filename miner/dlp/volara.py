@@ -31,13 +31,3 @@ async def submit(file_url: str) -> None:
         )
     add_file_fn = dlp_contract.functions.addFile(file_url, "nil")
     chain_manager.send_transaction(add_file_fn, wallet.hotkey)
-
-
-if __name__ == "__main__":
-    import asyncio
-
-    asyncio.run(
-        submit(
-            "https://drive.usercontent.google.com/download?id=1hYc76Wh_E4K4eRkXDg15sX4OoWu6pItx&export=download"
-        )
-    )
