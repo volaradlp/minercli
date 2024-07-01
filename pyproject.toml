@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "volara-miner"
+version = "0.1.0"
+description = "Scrape tweets from the web and upload to the Volara DLP"
+authors = ["Volara"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.13"
+click = "^8.1.7"
+twitter-api-client = "^0.10.22"
+flatbuffers = "^24.3.25"
+google-api-python-client = "^2.134.0"
+google-auth-httplib2 = "^0.2.0"
+google-auth-oauthlib = "^1.2.0"
+vana = "^0.7.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
