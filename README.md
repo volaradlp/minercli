@@ -32,17 +32,12 @@ curl -sSL https://install.python-poetry.org | python3 -
 ## Quick Start
 
 ```shell
-git clone <this-repo>
-cd <this-repo>
-poetry install
-export PATH=$(pwd)/bin:$PATH
+git clone https://github.com/volaradlp/minercli.git
+cd minercli
+./setup.sh
 ```
 
-For convenience, add our bin to your path in ~/.bashrc
-
-```shell
-export PATH=$(pwd)/bin:$PATH
-```
+You should now have access to the `volara` cli command.
 
 # Interface
 
