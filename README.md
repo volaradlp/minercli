@@ -34,7 +34,7 @@ curl -sSL https://install.python-poetry.org | python3 -
 ```shell
 git clone https://github.com/volaradlp/minercli.git
 cd minercli
-./setup.sh
+source setup.sh
 ```
 
 You should now have access to the `volara` cli command.
