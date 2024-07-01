@@ -22,7 +22,6 @@ def get_active_account() -> T.Optional[Credentials]:
             )
             creds = Credentials(**code)
         if creds.expired:
-            click.echo("Current session is expired... requesting new credentials")
             creds = _call_volara_api_server_refresh(creds)
             if creds is not None:
                 _persist_credentials(creds)
