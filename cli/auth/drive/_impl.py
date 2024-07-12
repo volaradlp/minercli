@@ -60,13 +60,13 @@ def _persist_credentials(creds: Credentials) -> None:
 
 
 def _call_volara_api_server() -> T.Optional[Credentials]:
-    url_response = requests.get(f"{VOLARA_API}/auth/get-url")
+    url_response = requests.get(f"{VOLARA_API}/v1/drive/get-url")
     if url_response.status_code != 200:
         return
     url = url_response.json()["url"]
     click.echo(f"Copy and paste this URL into your browser: {url}")
     code = click.prompt("Paste your code")
-    code_response = requests.get(f"{VOLARA_API}/auth/callback?code={code}")
+    code_response = requests.get(f"{VOLARA_API}/v1/drive/callback?code={code}")
     code_response.raise_for_status()
     if code_response.status_code != 200:
         return
@@ -75,7 +75,9 @@ def _call_volara_api_server() -> T.Optional[Credentials]:
 
 
 def _call_volara_api_server_refresh(creds: Credentials) -> T.Optional[Credentials]:
-    url_response = requests.get(f"{VOLARA_API}/auth/refresh?refreshToken={creds.token}")
+    url_response = requests.get(
+        f"{VOLARA_API}/v1/drive/refresh-token?refreshToken={creds.token}"
+    )
     if url_response.status_code != 200:
         return
     resp = url_response.json()["tokens"]
