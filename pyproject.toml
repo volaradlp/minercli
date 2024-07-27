@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Scrape tweets from the web and upload to the Volara DLP"
 authors = ["Volara"]
 readme = "README.md"
+package-mode=false
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.13"
