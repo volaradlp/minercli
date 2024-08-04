@@ -84,11 +84,11 @@ volara auth drive logout
 #### Login to X
 
 ```shell
-volara auth drive login
+volara auth twitter login
 ```
 
 #### Logout to X
 
 ```shell
-volara auth drive logout
+volara auth twitter logout
 ```
