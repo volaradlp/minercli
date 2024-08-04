@@ -54,7 +54,7 @@ volara mine start
 #### Stop Mining
 
 ```shell
-volara mine start
+volara mine stop
 ```
 
 #### See Mining Logs
