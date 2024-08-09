@@ -69,6 +69,16 @@ volara mine stop
 volara mine logs
 ```
 
+## Account
+
+### Rewards
+
+#### View your hotkey's rewards
+
+```shell
+volara account rewards
+```
+
 ## Auth
 
 ### Google Drive
@@ -97,4 +107,12 @@ volara auth twitter login
 
 ```shell
 volara auth drive logout
+```
+
+## Misc
+
+#### Update the Volara CLI
+
+```shell
+volara update
 ```

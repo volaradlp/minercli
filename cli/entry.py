@@ -8,6 +8,8 @@ import cli.auth.twitter as twitter_auth
 import cli.auth.drive as drive_auth
 import cli.auth.vana as vana_auth
 
+import cli.account.rewards as volara_rewards
+
 import cli.update as volara_update
 
 
@@ -78,6 +80,18 @@ def logs():
 def update():
     """Update the Volara CLI"""
     volara_update.update_cli()
+
+
+@volara.group()
+def account():
+    """Volara account managment."""
+    pass
+
+
+@account.command()
+def rewards():
+    """Print Volara rewards."""
+    volara_rewards.print_rewards()
 
 
 if __name__ == "__main__":

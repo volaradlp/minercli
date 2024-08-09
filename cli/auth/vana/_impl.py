@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 import typing as T
-import click
 
 import vana
 
