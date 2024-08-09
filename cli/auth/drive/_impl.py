@@ -76,7 +76,10 @@ def _call_volara_api_server() -> T.Optional[Credentials]:
 
 def _call_volara_api_server_refresh(creds: Credentials) -> T.Optional[Credentials]:
     url_response = requests.get(
-        f"{VOLARA_API}/v1/drive/refresh-token?refreshToken={creds.token}"
+        f"{VOLARA_API}/v1/drive/refresh-token",
+        params={
+            "refreshToken": creds.token,
+        },
     )
     if url_response.status_code != 200:
         return
