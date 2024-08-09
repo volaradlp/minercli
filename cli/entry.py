@@ -6,6 +6,9 @@ import cli.drive_entry as drive_entry
 
 import cli.auth.twitter as twitter_auth
 import cli.auth.drive as drive_auth
+import cli.auth.vana as vana_auth
+
+import cli.update as volara_update
 
 
 @click.group()
@@ -36,6 +39,12 @@ def mine():
 )
 def start(shell):
     """Start the mining process"""
+    click.echo("Checking Vana credentials...")
+    if vana_auth.get_vana_hotkey() is None:
+        click.echo(
+            "Vana account is not present. Please install the Vana CLI and create a wallet."
+        )
+        return
     click.echo("Checking drive credentials...")
     if drive_auth.get_active_account() is None:
         click.echo("No active drive account found. Requesting credentials...")
@@ -63,6 +72,12 @@ def logs():
     """Get the logs from the mining process"""
     click.echo("Getting mining logs...")
     mining.echo_logs()
+
+
+@volara.command()
+def update():
+    """Update the Volara CLI"""
+    volara_update.update_cli()
 
 
 if __name__ == "__main__":
