@@ -54,7 +54,9 @@ def start(background: bool):
     click.echo("Checking twitter account credentials...")
     if twitter_auth.get_active_account() is None:
         click.echo("No active twitter account found. Requesting credentials...")
-        twitter_auth.set_active_account()
+        if not twitter_auth.set_active_account():
+            click.echo("Exiting...")
+            return
     click.echo("Starting mining daemon...")
     if background:
         mining.start_daemon()

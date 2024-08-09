@@ -20,13 +20,22 @@ def get_active_account() -> T.Optional[Account]:
         return None
 
 
-def set_active_account() -> None:
+def set_active_account() -> bool:
     click.echo("Setting active twitter account...")
     email = click.prompt("Enter your twitter email")
     username = click.prompt("Enter your twitter username")
     password = click.prompt("Enter your twitter password", hide_input=True)
-    _set_active_account(email, username, password)
+    try:
+        _set_active_account(email, username, password)
+    except Exception as e:
+        click.echo(click.style(str(e), fg="red"))
+        click.echo(
+            click.style(f"Failed to authenticate X account {username}.", fg="red"),
+            err=True,
+        )
+        return False
     click.echo("Active twitter account successfully set.")
+    return True
 
 
 def remove_active_account() -> None:
@@ -39,11 +48,7 @@ def remove_active_account() -> None:
 
 
 def _set_active_account(email: str, username: str, password: str) -> None:
-    try:
-        account = Account(email=email, username=username, password=password)
-    except Exception:
-        click.echo("Failed to authenticate.")
-        return
+    account = Account(email=email, username=username, password=password)
     os.makedirs(os.path.dirname(TMP_TWITTER_AUTH), exist_ok=True)
     with open(TMP_TWITTER_AUTH, "w") as file:
         file.write(json.dumps(dict(account.session.cookies)))
