@@ -45,11 +45,17 @@ The interface can be accessed via the CLI at `./bin/volara`
 
 ## Mining
 
+By default, miner runs as a background daemon.
+
 #### Start Mining
 
 ```shell
 volara mine start
 ```
+
+| Flag | Description                         |
+| ---- | ----------------------------------- |
+| -s   | Run the miner in your current shell |
 
 #### Stop Mining
 
@@ -90,5 +96,5 @@ volara auth twitter login
 #### Logout to X
 
 ```shell
-volara auth twitter logout
+volara auth drive logout
 ```

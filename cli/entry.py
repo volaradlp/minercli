@@ -31,7 +31,10 @@ def mine():
 
 
 @mine.command()
-def start():
+@click.option(
+    "--shell", "-s", is_flag=True, help="Start the mining process in your current shell"
+)
+def start(shell):
     """Start the mining process"""
     click.echo("Checking drive credentials...")
     if drive_auth.get_active_account() is None:
@@ -42,7 +45,10 @@ def start():
         click.echo("No active twitter account found. Requesting credentials...")
         twitter_auth.set_active_account()
     click.echo("Starting mining daemon...")
-    mining.start_daemon()
+    if shell:
+        mining.start_inline()
+    else:
+        mining.start_daemon()
 
 
 @mine.command()

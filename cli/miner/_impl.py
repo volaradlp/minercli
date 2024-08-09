@@ -6,6 +6,14 @@ import click
 from constants import TMP_MINER_LOG, TMP_PID_FILE
 
 
+def start_inline():
+    import asyncio
+    from miner.run import start_mining
+
+    click.echo("Starting mining process in this shell...")
+    asyncio.run(start_mining())
+
+
 # Function to start the daemon
 def start_daemon():
     try:
