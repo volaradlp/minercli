@@ -28,7 +28,12 @@ async def start_mining():
             except Exception:
                 logger.exception("Error pulling timeline")
                 continue
-            new_tweets = extract_tweets(timeline)
+            try:
+                new_tweets = extract_tweets(timeline)
+            except Exception:
+                logger.exception("Error extracting the fetched tweets...")
+                logging.info(timeline)
+                raise
             tweets.update(new_tweets)
             logger.info(
                 f"Pulled {len(new_tweets)} tweets... total buffer: {len(tweets)}"

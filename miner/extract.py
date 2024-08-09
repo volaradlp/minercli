@@ -32,7 +32,8 @@ def extract_tweets(tweet_data: list[dict[str, T.Any]]) -> list[TweetData]:
             "instructions"
         ]:
             for tweets_entry in tweets_intructions["entries"]:
-                for tweet_wrapper in _iterate_entries(tweets_entry["content"]):
+                entry_iterator = _iterate_entries(tweets_entry["content"])
+                for tweet_wrapper in entry_iterator:
                     tweet = tweet_wrapper["legacy"]
                     user_info = tweet_wrapper["core"]["user_results"]["result"][
                         "legacy"
