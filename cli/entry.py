@@ -37,9 +37,9 @@ def mine():
 
 @mine.command()
 @click.option(
-    "--shell", "-s", is_flag=True, help="Start the mining process in your current shell"
+    "--background", "-b", is_flag=True, help="Run the miner in a background process"
 )
-def start(shell):
+def start(background: bool):
     """Start the mining process"""
     click.echo("Checking Vana credentials...")
     if vana_auth.get_vana_hotkey() is None:
@@ -56,10 +56,10 @@ def start(shell):
         click.echo("No active twitter account found. Requesting credentials...")
         twitter_auth.set_active_account()
     click.echo("Starting mining daemon...")
-    if shell:
-        mining.start_inline()
-    else:
+    if background:
         mining.start_daemon()
+    else:
+        mining.start_inline()
 
 
 @mine.command()

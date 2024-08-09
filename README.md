@@ -53,9 +53,9 @@ By default, miner runs as a background daemon.
 volara mine start
 ```
 
-| Flag | Description                         |
-| ---- | ----------------------------------- |
-| -s   | Run the miner in your current shell |
+| Flag | Description                           |
+| ---- | ------------------------------------- |
+| -b   | Run the miner in a background process |
 
 #### Stop Mining
 
