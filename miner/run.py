@@ -3,7 +3,12 @@ import logging
 import os
 
 import miner.dlp.volara as volara
-from constants import TARGET_TWEET_COUNT, TIMELINE_SLEEP_INTERVAL, TMP_MINER_LOG
+from constants import (
+    ERROR_SLEEP_INTERVAL,
+    TARGET_TWEET_COUNT,
+    TIMELINE_SLEEP_INTERVAL,
+    TMP_MINER_LOG,
+)
 from cli.auth.twitter import get_active_account
 from miner.build import build_tweet_buffer, build_zip_buffer
 from miner.extract import TweetData, extract_tweets
@@ -27,13 +32,17 @@ async def start_mining():
                 timeline = account.home_timeline(limit=TARGET_TWEET_COUNT)
             except Exception:
                 logger.exception("Error pulling timeline")
+                logger.info(f"Sleeping {ERROR_SLEEP_INTERVAL}s for timeline refresh...")
+                await asyncio.sleep(ERROR_SLEEP_INTERVAL)
                 continue
             try:
                 new_tweets = extract_tweets(timeline)
             except Exception:
                 logger.exception("Error extracting the fetched tweets...")
                 logging.info(timeline)
-                raise
+                logger.info(f"Sleeping {ERROR_SLEEP_INTERVAL}s for timeline refresh...")
+                await asyncio.sleep(ERROR_SLEEP_INTERVAL)
+                continue
             tweets.update(new_tweets)
             logger.info(
                 f"Pulled {len(new_tweets)} tweets... total buffer: {len(tweets)}"
