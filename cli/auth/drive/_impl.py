@@ -4,7 +4,7 @@ import click
 import requests
 import json
 import datetime as dt
-
+import logging
 from google.oauth2.credentials import Credentials
 
 from constants import TMP_DRIVE_AUTH, VOLARA_API
@@ -14,6 +14,7 @@ SCOPES = ["https://www.googleapis.com/auth/drive.file"]
 
 def get_active_account() -> T.Optional[Credentials]:
     if os.path.exists(TMP_DRIVE_AUTH):
+        logging.debug("Found existing drive auth token.")
         with open(TMP_DRIVE_AUTH, "r") as token:
             code = json.load(token)
             code["expiry"] = dt.datetime.fromisoformat(code["expiry"][:-1]).replace(
@@ -21,12 +22,14 @@ def get_active_account() -> T.Optional[Credentials]:
             )
             creds = Credentials(**code)
         if creds.expired:
+            logging.debug("Drive auth token expired. Refreshing...")
             creds = _call_volara_api_server_refresh(creds)
             if creds is not None:
                 _persist_credentials(creds)
             return creds
         if creds.valid:
             return creds
+    logging.debug("No active drive account found.")
     return None
 
 
@@ -82,6 +85,7 @@ def _call_volara_api_server_refresh(creds: Credentials) -> T.Optional[Credential
         },
     )
     if url_response.status_code != 200:
+        logging.error(f"Failed to refresh drive token: {url_response.json()}")
         return
     resp = url_response.json()["tokens"]
     return _form_credentials_from_token(resp)
@@ -96,3 +100,8 @@ def _form_credentials_from_token(resp: T.Dict[str, T.Any]) -> Credentials:
         ),
     }
     return Credentials(**code)
+
+
+if __name__ == "__main__":
+    creds = get_active_account()
+    print(creds)

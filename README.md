@@ -116,3 +116,9 @@ volara auth drive logout
 ```shell
 volara update
 ```
+
+#### Check the Volara CLI version
+
+```shell
+volara --version
+```

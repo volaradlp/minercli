@@ -1,5 +1,7 @@
 import os
 
+VERSION = "0.1.0"
+
 VOLARA_TMP_DIR = os.path.expanduser("~/.volara")
 
 TMP_MINER_LOG = f"{VOLARA_TMP_DIR}/miner.log"

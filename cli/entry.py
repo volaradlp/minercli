@@ -1,5 +1,9 @@
 import click
 
+from constants import VERSION
+
+from cli.debug import DebugCommandGroup
+
 import cli.miner as mining
 import cli.twitter_entry as twitter_entry
 import cli.drive_entry as drive_entry
@@ -13,10 +17,12 @@ import cli.account.rewards as volara_rewards
 import cli.update as volara_update
 
 
-@click.group()
-def volara():
+@click.group(cls=DebugCommandGroup)
+@click.version_option(version=VERSION)
+@click.pass_context
+def volara(ctx):
     """Volora CLI tool"""
-    pass
+    ctx.ensure_object(dict)
 
 
 @volara.group()
@@ -29,7 +35,7 @@ twitter_entry.register(auth)
 drive_entry.register(auth)
 
 
-@volara.group()
+@volara.group(cls=DebugCommandGroup)
 def mine():
     """Commands related to mining"""
     pass
@@ -97,4 +103,4 @@ def rewards():
 
 
 if __name__ == "__main__":
-    volara()
+    volara(obj={})
