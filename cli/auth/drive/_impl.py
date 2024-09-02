@@ -81,19 +81,22 @@ def _call_volara_api_server_refresh(creds: Credentials) -> T.Optional[Credential
     url_response = requests.get(
         f"{VOLARA_API}/v1/drive/refresh-token",
         params={
-            "refreshToken": creds.token,
+            "refreshToken": creds.refresh_token,
         },
     )
     if url_response.status_code != 200:
         logging.error(f"Failed to refresh drive token: {url_response.json()}")
+        url_response.raise_for_status()
         return
     resp = url_response.json()["tokens"]
+    resp["refresh_token"] = creds.refresh_token
     return _form_credentials_from_token(resp)
 
 
 def _form_credentials_from_token(resp: T.Dict[str, T.Any]) -> Credentials:
     code = {
         "token": resp["access_token"],
+        "refresh_token": resp["refresh_token"],
         "scopes": [resp["scope"]],
         "expiry": dt.datetime.fromtimestamp(
             resp["expiry_date"] / 1000, dt.timezone.utc
