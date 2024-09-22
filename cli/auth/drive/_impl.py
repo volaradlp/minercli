@@ -100,7 +100,7 @@ def _form_credentials_from_token(resp: T.Dict[str, T.Any]) -> Credentials:
         "scopes": [resp["scope"]],
         "expiry": dt.datetime.fromtimestamp(
             resp["expiry_date"] / 1000, dt.timezone.utc
-        ),
+        ).replace(tzinfo=None),
     }
     return Credentials(**code)
 
