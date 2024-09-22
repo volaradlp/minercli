@@ -13,6 +13,7 @@ from cli.auth.twitter import get_active_account
 from miner.build import build_tweet_buffer, build_zip_buffer
 from miner.extract import TweetData, extract_tweets
 from miner.drive import write_uuid_file
+from miner.miner.encrypt import encrypt_buffer
 
 
 logger = logging.getLogger(__name__)
@@ -54,7 +55,8 @@ async def start_mining():
         tweet_buffer = build_tweet_buffer(tweets)
         logger.info("Uploading tweet buffer to drive...")
         zip_buffer = build_zip_buffer(tweet_buffer)
-        file_url = await write_uuid_file(zip_buffer)
+        encrypted_zip_buffer = encrypt_buffer(zip_buffer)
+        file_url = await write_uuid_file(encrypted_zip_buffer)
         logger.info(f"Uploaded tweet buffer to {file_url}")
         logger.info("Submitting to volara...")
         await volara.submit(file_url)
