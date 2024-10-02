@@ -851,15 +851,16 @@
         "internalType": "string",
         "name": "url",
         "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "encryptedKey",
-        "type": "string"
       }
     ],
     "name": "addFile",
-    "outputs": [],
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "fileId",
+        "type": "uint256"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },
