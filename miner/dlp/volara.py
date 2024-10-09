@@ -1,13 +1,30 @@
-from dataclasses import dataclass
+import requests
 import os
-import vana
+import asyncio
+import random
 import json
+import logging
+from dataclasses import dataclass
 
-from constants import DLP_ADDRESS
-
-dlp_implementation_abi_path = os.path.join(
-    os.path.dirname(__file__), "dlp-implementation-abi.json"
+from constants import (
+    BALANCE_ERROR_STRING,
+    DATA_REGISTRATION_ADDRESS,
+    DLP_ADDRESS,
+    TEE_POOL_ADDRESS,
+    ENCRYPTION_SEED,
+    VALIDATOR_IMAGE,
+    VOLARA_API_KEY,
+    VOLARA_DLP_OWNER_ADDRESS,
 )
+from miner.encrypt import encrypt_with_public_key, get_encryption_key
+from miner.wallet import get_wallet, get_chain_manager
+from cli.auth.twitter import get_active_account
+
+data_registry_abi_path = os.path.join(
+    os.path.dirname(__file__), "data-registry-abi.json"
+)
+tee_pool_abi_path = os.path.join(os.path.dirname(__file__), "tee-pool-abi.json")
+dlp_abi_path = os.path.join(os.path.dirname(__file__), "dlp-abi.json")
 
 
 @dataclass
@@ -21,13 +38,164 @@ async def submit(file_url: str) -> None:
     Args:
         file_url: The URL of the file to upload to the DLP.
     """
-    config = vana.Config()
-    config.chain = ChainConfig(network="satori")
-    chain_manager = vana.ChainManager(config=config)
-    wallet = vana.Wallet()
-    with open(dlp_implementation_abi_path) as f:
+    logging.info("Adding file...")
+    file_id = await _add_file(file_url)
+    logging.info("Adding file permission...")
+    await _add_file_permission(file_id)
+    logging.info("Submitting TEE request...")
+    await _submit_tee_request(file_id)
+    logging.info("Requesting reward...")
+    await _request_reward(file_id)
+
+
+async def _add_file(file_url: str) -> int:
+    """Adds a file to the Vana DLP implementation.
+
+    Args:
+        file_url: The URL of the file to add to the DLP.
+    """
+    wallet = get_wallet()
+    chain_manager = get_chain_manager()
+    with open(data_registry_abi_path) as f:
+        dlp_contract = chain_manager.web3.eth.contract(
+            address=DATA_REGISTRATION_ADDRESS, abi=json.load(f)
+        )
+    add_file_fn = dlp_contract.functions.addFile(file_url)
+    file_id_tx = chain_manager.send_transaction(add_file_fn, wallet.hotkey)
+    if file_id_tx is None:
+        raise Exception(BALANCE_ERROR_STRING)
+    file_id = int(file_id_tx[1].logs[0]["topics"][1].hex(), 16)
+    return file_id
+
+
+async def _add_file_permission(file_id: int) -> None:
+    """Adds a file permission to the Vana DLP implementation.
+
+    Args:
+        file_id: The ID of the file to add the permission to.
+    """
+    wallet = get_wallet()
+    chain_manager = get_chain_manager()
+    with open(data_registry_abi_path) as f:
+        dlp_contract = chain_manager.web3.eth.contract(
+            address=DATA_REGISTRATION_ADDRESS, abi=json.load(f)
+        )
+    encryption_key = get_encryption_key()
+    encrypted_symmetric_key = encrypt_with_public_key(encryption_key)
+    add_file_permission_fn = dlp_contract.functions.addFilePermission(
+        file_id, VOLARA_DLP_OWNER_ADDRESS, f"0x{encrypted_symmetric_key.hex()}"
+    )
+    tx = chain_manager.send_transaction(add_file_permission_fn, wallet.hotkey)
+    if tx is None:
+        raise Exception(BALANCE_ERROR_STRING)
+
+
+async def _submit_tee_request(file_id: int) -> None:
+    """Submits a request to the Vana DLP implementation.
+
+    Args:
+        file_id: The ID of the file to submit to the DLP.
+
+    Returns:
+        The TEE fee amount.
+    """
+    wallet = get_wallet()
+    chain_manager = get_chain_manager()
+    with open(tee_pool_abi_path) as f:
+        tee_pool_contract = chain_manager.web3.eth.contract(
+            address=TEE_POOL_ADDRESS, abi=json.load(f)
+        )
+    tee_fee_fn = tee_pool_contract.functions.teeFee()
+    tee_fee: int = chain_manager.read_contract_fn(tee_fee_fn)
+
+    submit_request_fn = tee_pool_contract.functions.requestContributionProof(file_id)
+    submit_request_tx = chain_manager.send_transaction(
+        submit_request_fn, wallet.hotkey, value=tee_fee / 10**18
+    )
+    if submit_request_tx is None:
+        raise Exception(BALANCE_ERROR_STRING)
+    block = submit_request_tx[1].blockNumber
+
+    job_id = None
+    while job_id is None:
+        events = tee_pool_contract.events.JobSubmitted.get_logs(fromBlock=block)
+        for event in events:
+            if event["args"]["fileId"] == file_id:
+                job_id = event["args"]["jobId"]
+                break
+        logging.info("Waiting for TEE job_id...")
+        await asyncio.sleep(1)
+
+    job_tee_fn = tee_pool_contract.functions.jobTee(job_id)
+    job_tee = chain_manager.read_contract_fn(job_tee_fn)
+    try:
+        await send_tee_post(job_id, file_id, job_tee[1])
+    except Exception as e:
+        logging.exception("Error sending TEE post!")
+        raise e
+
+
+async def send_tee_post(job_id: int, file_id: int, tee_url: str) -> None:
+    """Sends a TEE post to the Vana DLP implementation.
+
+    Args:
+        job_id: The ID of the job to send the TEE post for.
+        file_id: The ID of the file to send the TEE post for.
+        tee_url: The URL of the TEE to send the post to.
+    """
+    logging.info("Send TEE post...")
+    cookies = _get_cookie_str()
+    tee_post_response = requests.post(
+        f"{tee_url}/RunProof",
+        headers={
+            "Content-Type": "application/json",
+        },
+        json={
+            "job_id": job_id,
+            "file_id": file_id,
+            "encryption_key": get_encryption_key(),
+            "encryption_seed": ENCRYPTION_SEED,
+            "proof_url": VALIDATOR_IMAGE,
+            "env_vars": {
+                "FILE_ID": str(file_id),
+                "MINER_ADDRESS": get_wallet().hotkey.address,
+                "COOKIES": cookies,
+            },
+            "secrets": {
+                "VOLARA_API_KEY": VOLARA_API_KEY,
+            },
+            "nonce": random.randint(0, 2**16),
+        },
+    )
+    tee_post_response.raise_for_status()
+    tee_post_response_json = tee_post_response.json()
+    return tee_post_response_json
+
+
+async def _request_reward(file_id: int) -> None:
+    """Requests a reward for a file.
+
+    Args:
+        file_id: The ID of the file to request a reward for.
+    """
+    wallet = get_wallet()
+    chain_manager = get_chain_manager()
+    with open(dlp_abi_path) as f:
         dlp_contract = chain_manager.web3.eth.contract(
             address=DLP_ADDRESS, abi=json.load(f)
         )
-    add_file_fn = dlp_contract.functions.addFile(file_url, "nil")
-    chain_manager.send_transaction(add_file_fn, wallet.hotkey)
+    request_reward_fn = dlp_contract.functions.requestReward(file_id, 1)
+    tx = chain_manager.send_transaction(request_reward_fn, wallet.hotkey)
+    if tx is None:
+        raise Exception(BALANCE_ERROR_STRING)
+
+
+def _get_cookie_str() -> str:
+    account = get_active_account()
+    if account is None:
+        raise ValueError("No active account found")
+    cookie_dict = dict(account.session.cookies)
+    del cookie_dict["personalization_id"]
+    del cookie_dict["password"]
+    cookie_dict["twid"] = cookie_dict["twid"].replace('"', "")
+    return json.dumps(cookie_dict)

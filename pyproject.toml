@@ -15,6 +15,8 @@ google-api-python-client = "^2.134.0"
 google-auth-httplib2 = "^0.2.0"
 google-auth-oauthlib = "^1.2.0"
 vana = "^0.7.0"
+pgpy = "^0.6.0"
+eciespy = "^0.4.2"
 
 
 [build-system]
