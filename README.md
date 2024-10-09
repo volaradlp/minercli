@@ -15,7 +15,49 @@ Volara uses two credentials to perform mining on Vana:
 1. X username and password, for access to the Twitter API
 2. Google OAUTH, for storing your mined X data in Google Drive.
 
-# Install
+# Mine With Docker
+
+The easiest way to run the Volara miner is with Docker - a containerization solution that manages the miner dependencies.
+
+## Prerequisites
+
+You must have docker installed on your system.
+
+### Install Docker
+
+#### Linux / Windows
+
+The public installation documentation can be found [here](https://docs.docker.com/engine/install/)
+
+#### MacOSX
+
+To install docker on mac, run the below commands
+
+```shell
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+brew install docker
+```
+
+### Create and Fund Your Wallet
+
+Any Ethereum-compatible wallets will work with Vana/Volara. We recommend getting started with metamask.
+
+Create a Metamask wallet [here](https://support.metamask.io/getting-started/getting-started-with-metamask/#how-to-install-metamask)
+
+Get <your_private_key> [here](https://support.metamask.io/managing-my-wallet/secret-recovery-phrase-and-private-keys/how-to-export-an-accounts-private-key/)
+
+## Start Mining
+
+Once docker is installed, run the below commands in your terminal to run the miner.
+
+Replace <your_private_key> with any Ethereum compatible private key.
+
+```shell
+docker pull volara/miner
+docker run -e VANA_PRIVATE_KEY=<your_private_key> -i volara/miner
+```
+
+# Mine With Native Installation
 
 ## Prerequisites
 
