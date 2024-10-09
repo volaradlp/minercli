@@ -199,29 +199,3 @@ def _get_cookie_str() -> str:
     del cookie_dict["password"]
     cookie_dict["twid"] = cookie_dict["twid"].replace('"', "")
     return json.dumps(cookie_dict)
-
-
-if __name__ == "__main__":
-    import asyncio
-
-    # asyncio.run(
-    #     submit(
-    #         "https://drive.google.com/uc?id=1_o77rkJdvMDm979eWVT-uDrb5TrjP5M-&export=download"
-    #     )
-    # )
-
-    asyncio.run(
-        submit(
-            "https://drive.google.com/uc?id=1qTLFUGvpXRvlm3PTbDDGHemsUaL5102U&export=download"
-        )
-    )
-
-    # https://drive.usercontent.google.com/download?id=1jLUFHGdbP5UkFmerm5spotRAHAaPfBwq&export=download&authuser=0
-    # file_id = asyncio.run(
-    #     _add_file(
-    #         "https://drive.usercontent.google.com/download?id=1o3tYWAgZqWsE_ac6ruxYflgjUXPuKnSV&export=download&authuser=0"
-    #     )
-    # )
-    # asyncio.run(_submit_tee_request(file_id))
-    # _request_reward(1833)
-    # asyncio.run(_add_file_permission(1833))
