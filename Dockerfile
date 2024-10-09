@@ -16,9 +16,7 @@ RUN apt-get update && \
 
 RUN pip install --upgrade pip && \
     pip install poetry && \
-    chmod +x ./setup.sh && \
-    ./setup.sh
-
+    poetry install
 
 # Run the miner when the container launches
 CMD ["./bin/volara", "mine", "start"]

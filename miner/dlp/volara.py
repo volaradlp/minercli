@@ -169,6 +169,10 @@ async def send_tee_post(job_id: int, file_id: int, tee_url: str) -> None:
     )
     tee_post_response.raise_for_status()
     tee_post_response_json = tee_post_response.json()
+    if tee_post_response_json["exit_code"] != 0:
+        raise Exception(
+            f"TEE post failed with exit code {tee_post_response_json['exit_code']}"
+        )
     return tee_post_response_json
 
 
@@ -185,9 +189,11 @@ async def _request_reward(file_id: int) -> None:
             address=DLP_ADDRESS, abi=json.load(f)
         )
     request_reward_fn = dlp_contract.functions.requestReward(file_id, 1)
-    tx = chain_manager.send_transaction(request_reward_fn, wallet.hotkey)
-    if tx is None:
-        raise Exception(BALANCE_ERROR_STRING)
+    tx = None
+    while tx is None:
+        tx = chain_manager.send_transaction(request_reward_fn, wallet.hotkey)
+        logging.info("Waiting for file proof to be posted...")
+        await asyncio.sleep(10)
 
 
 def _get_cookie_str() -> str:

@@ -25,26 +25,29 @@ You must have docker installed on your system.
 
 ### Install Docker
 
-#### Linux / Windows
+#### Mac / Linux / Windows
+
+Docker desktop can be installed [here](https://www.docker.com/products/docker-desktop/)
 
 The public installation documentation can be found [here](https://docs.docker.com/engine/install/)
-
-#### MacOSX
-
-To install docker on mac, run the below commands
-
-```shell
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-brew install docker
-```
 
 ### Create and Fund Your Wallet
 
 Any Ethereum-compatible wallets will work with Vana/Volara. We recommend getting started with metamask.
 
+#### Create Metamask Wallet
+
 Create a Metamask wallet [here](https://support.metamask.io/getting-started/getting-started-with-metamask/#how-to-install-metamask)
 
 Get <your_private_key> [here](https://support.metamask.io/managing-my-wallet/secret-recovery-phrase-and-private-keys/how-to-export-an-accounts-private-key/)
+
+#### Fund Wallet
+
+The Vana faucet can fund your address [here](https://faucet.vana.org)
+
+#### Add Vana Network to Wallet
+
+You can add the Vana network to your wallet to see Vana and Volara tokens [here](https://docs.vana.org/vana/for-builders/network-setup/network-information#setting-up-the-network)
 
 ## Start Mining
 
@@ -54,7 +57,8 @@ Replace <your_private_key> with any Ethereum compatible private key.
 
 ```shell
 docker pull volara/miner
-docker run -e VANA_PRIVATE_KEY=<your_private_key> -i volara/miner
+export VANA_PRIVATE_KEY=<your_public_key>
+./start.sh
 ```
 
 # Mine With Native Installation
