@@ -68,6 +68,11 @@
   },
   {
     "inputs": [],
+    "name": "InvalidJobTee",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "JobCompleted",
     "type": "error"
   },
@@ -208,6 +213,12 @@
         "internalType": "uint256",
         "name": "fileId",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "teeAddress",
+        "type": "address"
       },
       {
         "indexed": false,
@@ -416,6 +427,11 @@
             "internalType": "uint256",
             "name": "withdrawnAmount",
             "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "jobsCount",
+            "type": "uint256"
           }
         ],
         "internalType": "struct ITeePool.TeeInfo",
@@ -462,7 +478,7 @@
               },
               {
                 "internalType": "uint256",
-                "name": "timestamp",
+                "name": "dlpId",
                 "type": "uint256"
               },
               {
@@ -563,6 +579,25 @@
   {
     "inputs": [
       {
+        "internalType": "uint256",
+        "name": "fileId",
+        "type": "uint256"
+      }
+    ],
+    "name": "fileJobIds",
+    "outputs": [
+      {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "ownerAddress",
         "type": "address"
@@ -610,52 +645,6 @@
         "type": "uint256"
       }
     ],
-    "name": "jobTee",
-    "outputs": [
-      {
-        "components": [
-          {
-            "internalType": "address",
-            "name": "teeAddress",
-            "type": "address"
-          },
-          {
-            "internalType": "string",
-            "name": "url",
-            "type": "string"
-          },
-          {
-            "internalType": "enum ITeePool.TeeStatus",
-            "name": "status",
-            "type": "uint8"
-          },
-          {
-            "internalType": "uint256",
-            "name": "amount",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "withdrawnAmount",
-            "type": "uint256"
-          }
-        ],
-        "internalType": "struct ITeePool.TeeInfo",
-        "name": "",
-        "type": "tuple"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "jobId",
-        "type": "uint256"
-      }
-    ],
     "name": "jobs",
     "outputs": [
       {
@@ -684,6 +673,11 @@
             "internalType": "address",
             "name": "ownerAddress",
             "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "teeAddress",
+            "type": "address"
           }
         ],
         "internalType": "struct ITeePool.Job",
@@ -705,6 +699,25 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes[]",
+        "name": "data",
+        "type": "bytes[]"
+      }
+    ],
+    "name": "multicall",
+    "outputs": [
+      {
+        "internalType": "bytes[]",
+        "name": "results",
+        "type": "bytes[]"
+      }
+    ],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -826,6 +839,35 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "teeAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "start",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "limit",
+        "type": "uint256"
+      }
+    ],
+    "name": "teeJobIdsPaginated",
+    "outputs": [
+      {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "teeList",
     "outputs": [
@@ -874,6 +916,11 @@
             "internalType": "uint256",
             "name": "withdrawnAmount",
             "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "jobsCount",
+            "type": "uint256"
           }
         ],
         "internalType": "struct ITeePool.TeeInfo",
@@ -919,6 +966,11 @@
           {
             "internalType": "uint256",
             "name": "withdrawnAmount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "jobsCount",
             "type": "uint256"
           }
         ],

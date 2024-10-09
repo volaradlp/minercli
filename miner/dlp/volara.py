@@ -95,9 +95,6 @@ async def _submit_tee_request(file_id: int) -> None:
 
     Args:
         file_id: The ID of the file to submit to the DLP.
-
-    Returns:
-        The TEE fee amount.
     """
     wallet = get_wallet()
     chain_manager = get_chain_manager()
@@ -114,22 +111,24 @@ async def _submit_tee_request(file_id: int) -> None:
     )
     if submit_request_tx is None:
         raise Exception(BALANCE_ERROR_STRING)
-    block = submit_request_tx[1].blockNumber
 
-    job_id = None
-    while job_id is None:
-        events = tee_pool_contract.events.JobSubmitted.get_logs(fromBlock=block)
-        for event in events:
-            if event["args"]["fileId"] == file_id:
-                job_id = event["args"]["jobId"]
-                break
-        logging.info("Waiting for TEE job_id...")
-        await asyncio.sleep(1)
+    # Fetch job ID of submitted request
+    file_job_ids = tee_pool_contract.functions.fileJobIds(file_id)
+    job_ids = chain_manager.read_contract_fn(file_job_ids)
+    job_id = job_ids[0]
 
-    job_tee_fn = tee_pool_contract.functions.jobTee(job_id)
-    job_tee = chain_manager.read_contract_fn(job_tee_fn)
+    # Fetch the job information
+    job_fn = tee_pool_contract.functions.jobs(job_id)
+    job = chain_manager.read_contract_fn(job_fn)
+
+    # Fetch the assigned TEE information
+    tee_address = job[5]
+    tees_fn = tee_pool_contract.functions.tees(tee_address)
+    tees = chain_manager.read_contract_fn(tees_fn)
+    tee_url = tees[1]
+
     try:
-        await send_tee_post(job_id, file_id, job_tee[1])
+        await send_tee_post(job_id, file_id, tee_url)
     except Exception as e:
         logging.exception("Error sending TEE post!")
         raise e
