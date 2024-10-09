@@ -1,4 +1,7 @@
 import vana
+import os
+
+from eth_account import Account
 from dataclasses import dataclass
 
 
@@ -9,6 +12,9 @@ class ChainConfig:
 
 def get_wallet():
     wallet = vana.Wallet()
+    if vana_private_key := os.getenv("VANA_PRIVATE_KEY"):
+        account = Account.from_key(vana_private_key)
+        wallet._hotkey = account
     return wallet
 
 

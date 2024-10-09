@@ -18,6 +18,7 @@ vana = "^0.7.0"
 gnupg = "^2.3.1"
 python-gnupg = "^0.5.3"
 pgpy = "^0.6.0"
+eciespy = "^0.4.2"
 
 
 [build-system]
