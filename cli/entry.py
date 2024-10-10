@@ -50,7 +50,7 @@ def start(background: bool):
     click.echo("Checking Vana credentials...")
     if vana_auth.get_vana_hotkey() is None:
         click.echo(
-            "Vana account is not present. Please install the Vana CLI and create a wallet."
+            "Vana account is not present. Please install the Vana CLI and create a wallet: https://docs.vana.org/vana/for-builders/network-setup/creating-a-wallet#creating-a-local-wallet-with-cli"
         )
         return
     click.echo("Checking drive credentials...")

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "volara-miner"
-version = "0.1.0"
+version = "1.0.0"
 description = "Scrape tweets from the web and upload to the Volara DLP"
 authors = ["Volara"]
 readme = "README.md"
@@ -15,7 +15,8 @@ google-api-python-client = "^2.134.0"
 google-auth-httplib2 = "^0.2.0"
 google-auth-oauthlib = "^1.2.0"
 vana = "^0.7.0"
-
+pgpy = "^0.6.0"
+eciespy = "^0.4.2"
 
 [build-system]
 requires = ["poetry-core"]
