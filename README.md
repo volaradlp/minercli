@@ -58,7 +58,7 @@ Replace <your_private_key> with any Ethereum compatible private key.
 ```shell
 docker pull volara/miner
 export VANA_PRIVATE_KEY=<your_private_key>
-docker run docker run -it -e VANA_PRIVATE_KEY=${VANA_PRIVATE_KEY} volara/miner
+docker run -it -e VANA_PRIVATE_KEY=${VANA_PRIVATE_KEY} volara/miner
 ```
 
 # Mine With Native Installation
