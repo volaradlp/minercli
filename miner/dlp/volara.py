@@ -200,7 +200,10 @@ def _get_cookie_str() -> str:
     if account is None:
         raise ValueError("No active account found")
     cookie_dict = dict(account.session.cookies)
-    del cookie_dict["personalization_id"]
-    del cookie_dict["password"]
-    cookie_dict["twid"] = cookie_dict["twid"].replace('"', "")
+    if "personalization_id" in cookie_dict:
+        del cookie_dict["personalization_id"]
+    if "password" in cookie_dict:
+        del cookie_dict["password"]
+    if "twid" in cookie_dict:
+        cookie_dict["twid"] = cookie_dict["twid"].replace('"', "")
     return json.dumps(cookie_dict)
