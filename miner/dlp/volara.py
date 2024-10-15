@@ -189,10 +189,15 @@ async def _request_reward(file_id: int) -> None:
         )
     request_reward_fn = dlp_contract.functions.requestReward(file_id, 1)
     tx = None
+    retry_count = 0
     while tx is None:
         tx = chain_manager.send_transaction(request_reward_fn, wallet.hotkey)
         logging.info("Waiting for file proof to be posted...")
         await asyncio.sleep(10)
+        retry_count += 1
+        if retry_count > 6:
+            logging.error("Failed to request reward... proceeding to next file")
+            return
 
 
 def _get_cookie_str() -> str:
