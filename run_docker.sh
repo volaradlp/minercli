@@ -90,7 +90,7 @@ check_docker_installed() {
 
 pull_volara_image() {
     show "Pulling Volara image..." "progress"
-    docker pull volara/miner > /dev/null 2>&1
+    sudo docker pull volara/miner > /dev/null 2>&1
     show "Volara image pulled successfully."
 }
 

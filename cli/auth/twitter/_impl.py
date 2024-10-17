@@ -1,5 +1,6 @@
 import os
 from twitter.account import Account
+from tweeterpy import TweeterPy
 import click
 import typing as T
 import json
@@ -22,11 +23,12 @@ def get_active_account() -> T.Optional[Account]:
 
 def set_active_account() -> bool:
     click.echo("Setting active twitter account...")
-    email = click.prompt("Enter your twitter email")
-    username = click.prompt("Enter your twitter username")
-    password = click.prompt("Enter your twitter password", hide_input=True)
+    if (username := os.environ.get("TWITTER_USERNAME")) is None:
+        username = click.prompt("Enter your twitter username")
+    if (password := os.environ.get("TWITTER_PASSWORD")) is None:
+        password = click.prompt("Enter your twitter password", hide_input=True)
     try:
-        _set_active_account(email, username, password)
+        _set_active_account(username, password)
     except Exception as e:
         click.echo(click.style(str(e), fg="red"))
         click.echo(
@@ -47,8 +49,9 @@ def remove_active_account() -> None:
         click.echo("No active twitter account found.")
 
 
-def _set_active_account(email: str, username: str, password: str) -> None:
-    account = Account(email=email, username=username, password=password)
+def _set_active_account(username: str, password: str) -> None:
+    account = TweeterPy()
+    account.login(username=username, password=password)
     os.makedirs(os.path.dirname(TMP_TWITTER_AUTH), exist_ok=True)
     with open(TMP_TWITTER_AUTH, "w") as file:
-        file.write(json.dumps(dict(account.session.cookies)))
+        file.write(json.dumps(dict(account.session.cookies.items())))

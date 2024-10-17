@@ -17,6 +17,7 @@ google-auth-oauthlib = "^1.2.0"
 vana = "^0.7.0"
 pgpy = "^0.6.0"
 eciespy = "^0.4.2"
+tweeterpy = "^1.2.4"
 
 [build-system]
 requires = ["poetry-core"]
