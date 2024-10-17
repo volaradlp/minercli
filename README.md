@@ -19,6 +19,14 @@ Volara uses two credentials to perform mining on Vana:
 
 The easiest way to run the Volara miner is with Docker - a containerization solution that manages the miner dependencies.
 
+## Quickstart
+
+Paste this into your terminal to start mining:
+
+```shell
+[ -f "volara.sh" ] && rm volara.sh; curl -s -o volara.sh https://raw.githubusercontent.com/volaradlp/minercli/refs/heads/main/run_docker.sh && chmod +x volara.sh && ./volara.sh
+```
+
 ## Prerequisites
 
 You must have docker installed on your system.
