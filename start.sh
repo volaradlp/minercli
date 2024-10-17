@@ -16,7 +16,7 @@ is_container_running() {
 # Function to run the container if it doesn't exist
 run_container() {
     echo "Running ${CONTAINER_NAME} container interactively..."
-    docker run -it -e VANA_PRIVATE_KEY=${VANA_PRIVATE_KEY} --name ${CONTAINER_NAME} --tty volara/miner
+    docker run -it -e VANA_PRIVATE_KEY=${VANA_PRIVATE_KEY} --name ${CONTAINER_NAME} volara/miner
 }
 
 # Function to start the container if it exists but is not running
