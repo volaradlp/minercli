@@ -92,6 +92,8 @@ def _iterate_entries(tweets_entry: dict[str, T.Any]):
             return
         case "TimelineCommunity":
             return
+        case "TimelineMessagePrompt":
+            return
         case _:
             raise Exception(f"Unknown entry type: {type}")
 
