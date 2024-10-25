@@ -37,11 +37,15 @@ async def start_mining():
                     return_when=asyncio.FIRST_COMPLETED,
                 )
             if mining_routine.exception():
-                logger.exception("Exception encountered while mining")
-                logging.exception(mining_routine.exception())
+                logger.error(
+                    "Exception encountered while mining",
+                    exc_info=mining_routine.exception(),
+                )
                 continue
             reward_routine = mining_routine.result()
             reward_routines.append(reward_routine)
+            reward_routines = [r for r in reward_routines if not r.done()]
+            logger.info(f"Rewards are pending for {len(reward_routines)} files...")
         except Exception:
             logger.exception("Exception encountered")
             logger.info("Restarting...")
@@ -62,7 +66,7 @@ async def mining_loop(account: Account) -> asyncio.Task[None]:
             new_tweets = extract_tweets(timeline)
         except Exception:
             logger.exception("Error extracting the fetched tweets...")
-            logging.info(timeline)
+            logger.info(timeline)
             logger.info(f"Sleeping {ERROR_SLEEP_INTERVAL}s for timeline refresh...")
             await asyncio.sleep(ERROR_SLEEP_INTERVAL)
             continue
@@ -82,7 +86,7 @@ async def mining_loop(account: Account) -> asyncio.Task[None]:
     async def _submit_to_volara(file_url: str) -> None:
         logger.info(f"Submitting {file_url} to volara...")
         await volara.submit(file_url)
-        logger.info(f"Submitted {file_url} to volara.")
+        logger.info(f"Submitted {file_url} to volara. Rewards received! 🎉💰")
 
     return asyncio.create_task(_submit_to_volara(file_url))
 
