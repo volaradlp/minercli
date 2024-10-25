@@ -4,6 +4,7 @@ import asyncio
 import random
 import json
 import logging
+import aiohttp
 from dataclasses import dataclass
 
 from constants import (
@@ -144,36 +145,36 @@ async def send_tee_post(job_id: int, file_id: int, tee_url: str) -> None:
     """
     logging.info("Send TEE post...")
     cookies = _get_cookie_str()
-    tee_post_response = requests.post(
-        f"{tee_url}/RunProof",
-        headers={
-            "Content-Type": "application/json",
-        },
-        json={
-            "job_id": job_id,
-            "file_id": file_id,
-            "encryption_key": get_encryption_key(),
-            "encryption_seed": ENCRYPTION_SEED,
-            "proof_url": VALIDATOR_IMAGE,
-            "env_vars": {
-                "FILE_ID": str(file_id),
-                "MINER_ADDRESS": get_wallet().hotkey.address,
-                "COOKIES": cookies,
+    async with aiohttp.ClientSession() as session:
+        async with session.post(
+            f"{tee_url}/RunProof",
+            headers={
+                "Content-Type": "application/json",
             },
-            "secrets": {
-                "VOLARA_API_KEY": VOLARA_API_KEY,
+            json={
+                "job_id": job_id,
+                "file_id": file_id,
+                "encryption_key": get_encryption_key(),
+                "encryption_seed": ENCRYPTION_SEED,
+                "proof_url": VALIDATOR_IMAGE,
+                "env_vars": {
+                    "FILE_ID": str(file_id),
+                    "MINER_ADDRESS": get_wallet().hotkey.address,
+                    "COOKIES": cookies,
+                },
+                "secrets": {
+                    "VOLARA_API_KEY": VOLARA_API_KEY,
+                },
+                "nonce": random.randint(0, 2**16),
             },
-            "nonce": random.randint(0, 2**16),
-        },
-        timeout=300,
-    )
-    tee_post_response.raise_for_status()
-    tee_post_response_json = tee_post_response.json()
-    if tee_post_response_json["exit_code"] != 0:
-        raise Exception(
-            f"TEE post failed with exit code {tee_post_response_json['exit_code']}"
-        )
-    return tee_post_response_json
+            timeout=None,
+        ) as response:
+            response.raise_for_status()
+            tee_post_response_json = await response.json()
+            if tee_post_response_json["exit_code"] != 0:
+                raise Exception(
+                    f"TEE post failed with exit code {tee_post_response_json['exit_code']}"
+                )
 
 
 async def _request_reward(file_id: int) -> None:

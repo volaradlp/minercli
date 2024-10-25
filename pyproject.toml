@@ -18,6 +18,7 @@ vana = "^0.7.0"
 pgpy = "^0.6.0"
 eciespy = "^0.4.2"
 tweeterpy = "^1.2.4"
+aiohttp = "^3.10.10"
 
 [build-system]
 requires = ["poetry-core"]

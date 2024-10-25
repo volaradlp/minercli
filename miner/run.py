@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import typing as T
 
 import miner.dlp.volara as volara
 from twitter.account import Account
@@ -26,15 +27,27 @@ async def start_mining():
     if account is None:
         logger.error("No active account found.")
         return
+    reward_routines: list[asyncio.Task[None]] = []
     while True:
         try:
-            await mining_loop(account)
+            mining_routine = asyncio.create_task(mining_loop(account))
+            while not mining_routine.done():
+                await asyncio.wait(
+                    [mining_routine, *reward_routines],
+                    return_when=asyncio.FIRST_COMPLETED,
+                )
+            if mining_routine.exception():
+                logger.exception("Exception encountered while mining")
+                logging.exception(mining_routine.exception())
+                continue
+            reward_routine = mining_routine.result()
+            reward_routines.append(reward_routine)
         except Exception:
             logger.exception("Exception encountered")
             logger.info("Restarting...")
 
 
-async def mining_loop(account: Account):
+async def mining_loop(account: Account) -> asyncio.Task[None]:
     tweets: set[TweetData] = set()
     while len(tweets) < TARGET_TWEET_COUNT:
         logger.info("Pulling tweets...")
@@ -65,9 +78,13 @@ async def mining_loop(account: Account):
     encrypted_zip_buffer = encrypt_buffer(zip_buffer)
     file_url = await write_uuid_file(encrypted_zip_buffer)
     logger.info(f"Uploaded tweet buffer to {file_url}")
-    logger.info("Submitting to volara...")
-    await volara.submit(file_url)
-    logger.info("Submitted to volara.")
+
+    async def _submit_to_volara(file_url: str) -> None:
+        logger.info(f"Submitting {file_url} to volara...")
+        await volara.submit(file_url)
+        logger.info(f"Submitted {file_url} to volara.")
+
+    return asyncio.create_task(_submit_to_volara(file_url))
 
 
 if __name__ == "__main__":
