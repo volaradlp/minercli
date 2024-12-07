@@ -160,7 +160,7 @@ volara auth twitter login
 #### Logout to X
 
 ```shell
-volara auth drive logout
+volara auth twitter logout
 ```
 
 ## Misc
