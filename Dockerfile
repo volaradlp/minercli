@@ -9,8 +9,6 @@ RUN apt-get update && \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-
 # Set the working directory in the container
 WORKDIR /app
 

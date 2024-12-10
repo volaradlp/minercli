@@ -86,7 +86,7 @@ async def mining_loop(account: Account) -> asyncio.Task[None]:
     async def _submit_to_volara(file_url: str) -> None:
         logger.info(f"Submitting {file_url} to volara...")
         await volara.submit(file_url)
-        logger.info(f"Submitted {file_url} to volara. Rewards received! 🎉💰")
+        logger.info(f"Submitted {file_url} to volara. Points have been received! 🎉🎉🎉")
 
     return asyncio.create_task(_submit_to_volara(file_url))
 
