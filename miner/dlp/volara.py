@@ -168,6 +168,7 @@ async def send_tee_post(job_id: int, file_id: int, tee_url: str) -> None:
                 "nonce": random.randint(0, 2**16),
             },
             timeout=None,
+            ssl=False,
         ) as response:
             response.raise_for_status()
             tee_post_response_json = await response.json()
