@@ -25,6 +25,6 @@ def get_chain_manager():
     config = vana.Config()
     config.chain = ChainConfig(network=NETWORK)
     if NETWORK == "vana":  # TODO: make this work with Vana lib
-        config.chain = ChainConfig(network="https://rpc.islander.vana.org")
+        config.chain = ChainConfig(network="https://rpc.vana.org")
     chain_manager = vana.ChainManager(config=config)
     return chain_manager
