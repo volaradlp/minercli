@@ -21,7 +21,6 @@ def _request_challenge():
 
 def _submit_signature(challenge):
     wallet = vana.Wallet()
-    vana.Message()
     message = encode_defunct(text=challenge["message"])
     signature = wallet.hotkey.sign_message(message).signature.hex()
     resp = requests.post(

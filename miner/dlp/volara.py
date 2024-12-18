@@ -1,4 +1,3 @@
-import requests
 import os
 import asyncio
 import random
@@ -16,16 +15,22 @@ from constants import (
     VALIDATOR_IMAGE,
     VOLARA_API_KEY,
     VOLARA_DLP_OWNER_ADDRESS,
+    GELATO_ENABLED,
 )
 from miner.encrypt import encrypt_with_public_key, get_encryption_key
+from miner.dlp.gelato import (
+    send_add_file_permission_relay_request,
+    send_add_file_relay_request,
+    send_request_contribution_proof_relay_request,
+    send_request_reward_relay_request,
+)
+from miner.dlp.contracts import (
+    get_data_registry_contract,
+    get_dlp_contract,
+    get_tee_pool_contract,
+)
 from miner.wallet import get_wallet, get_chain_manager
 from cli.auth.twitter import get_active_account
-
-data_registry_abi_path = os.path.join(
-    os.path.dirname(__file__), "data-registry-abi.json"
-)
-tee_pool_abi_path = os.path.join(os.path.dirname(__file__), "tee-pool-abi.json")
-dlp_abi_path = os.path.join(os.path.dirname(__file__), "dlp-abi.json")
 
 
 @dataclass
@@ -57,15 +62,15 @@ async def _add_file(file_url: str) -> int:
     """
     wallet = get_wallet()
     chain_manager = get_chain_manager()
-    with open(data_registry_abi_path) as f:
-        dlp_contract = chain_manager.web3.eth.contract(
-            address=DATA_REGISTRATION_ADDRESS, abi=json.load(f)
-        )
-    add_file_fn = dlp_contract.functions.addFile(file_url)
-    file_id_tx = chain_manager.send_transaction(add_file_fn, wallet.hotkey)
-    if file_id_tx is None:
-        raise Exception(BALANCE_ERROR_STRING)
-    file_id = int(file_id_tx[1].logs[0]["topics"][1].hex(), 16)
+    data_registry_contract = get_data_registry_contract()
+    if not GELATO_ENABLED:
+        add_file_fn = data_registry_contract.functions.addFile(file_url)
+        file_id_tx = chain_manager.send_transaction(add_file_fn, wallet.hotkey)
+        if file_id_tx is None:
+            raise Exception(BALANCE_ERROR_STRING)
+        file_id = int(file_id_tx[1].logs[0]["topics"][1].hex(), 16)
+    else:
+        file_id = await send_add_file_relay_request(data_registry_contract, file_url)
     return file_id
 
 
@@ -77,18 +82,20 @@ async def _add_file_permission(file_id: int) -> None:
     """
     wallet = get_wallet()
     chain_manager = get_chain_manager()
-    with open(data_registry_abi_path) as f:
-        dlp_contract = chain_manager.web3.eth.contract(
-            address=DATA_REGISTRATION_ADDRESS, abi=json.load(f)
-        )
+    data_registry_contract = get_data_registry_contract()
     encryption_key = get_encryption_key()
     encrypted_symmetric_key = encrypt_with_public_key(encryption_key)
-    add_file_permission_fn = dlp_contract.functions.addFilePermission(
-        file_id, VOLARA_DLP_OWNER_ADDRESS, f"0x{encrypted_symmetric_key.hex()}"
-    )
-    tx = chain_manager.send_transaction(add_file_permission_fn, wallet.hotkey)
-    if tx is None:
-        raise Exception(BALANCE_ERROR_STRING)
+    if not GELATO_ENABLED:
+        add_file_permission_fn = data_registry_contract.functions.addFilePermission(
+            file_id, VOLARA_DLP_OWNER_ADDRESS, f"0x{encrypted_symmetric_key.hex()}"
+        )
+        tx = chain_manager.send_transaction(add_file_permission_fn, wallet.hotkey)
+        if tx is None:
+            raise Exception(BALANCE_ERROR_STRING)
+    else:
+        await send_add_file_permission_relay_request(
+            data_registry_contract, file_id, f"0x{encrypted_symmetric_key.hex()}"
+        )
 
 
 async def _submit_tee_request(file_id: int) -> None:
@@ -99,19 +106,21 @@ async def _submit_tee_request(file_id: int) -> None:
     """
     wallet = get_wallet()
     chain_manager = get_chain_manager()
-    with open(tee_pool_abi_path) as f:
-        tee_pool_contract = chain_manager.web3.eth.contract(
-            address=TEE_POOL_ADDRESS, abi=json.load(f)
-        )
+    tee_pool_contract = get_tee_pool_contract()
     tee_fee_fn = tee_pool_contract.functions.teeFee()
     tee_fee: int = chain_manager.read_contract_fn(tee_fee_fn)
 
-    submit_request_fn = tee_pool_contract.functions.requestContributionProof(file_id)
-    submit_request_tx = chain_manager.send_transaction(
-        submit_request_fn, wallet.hotkey, value=tee_fee / 10**18
-    )
-    if submit_request_tx is None:
-        raise Exception(BALANCE_ERROR_STRING)
+    if not GELATO_ENABLED:
+        submit_request_fn = tee_pool_contract.functions.requestContributionProof(
+            file_id
+        )
+        submit_request_tx = chain_manager.send_transaction(
+            submit_request_fn, wallet.hotkey, value=tee_fee / 10**18
+        )
+        if submit_request_tx is None:
+            raise Exception(BALANCE_ERROR_STRING)
+    else:
+        await send_request_contribution_proof_relay_request(tee_pool_contract, file_id)
 
     # Fetch job ID of submitted request
     file_job_ids = tee_pool_contract.functions.fileJobIds(file_id)
@@ -178,6 +187,25 @@ async def send_tee_post(job_id: int, file_id: int, tee_url: str) -> None:
                 )
 
 
+async def _wait_for_file_proof(file_id: int) -> bool:
+    """Waits for a file proof to be posted.
+
+    Args:
+        file_id: The ID of the file to wait for the proof for.
+    """
+    chain_manager = get_chain_manager()
+    data_registry_contract = get_data_registry_contract()
+    file_proof_fn = data_registry_contract.functions.fileProofs(file_id, 1)
+    for _ in range(10):
+        file_proof = chain_manager.read_contract_fn(file_proof_fn)
+        signature = file_proof[0]
+        if len(signature) != 0:
+            return True
+        logging.info(f"Waiting for file proof: {file_id}...")
+        await asyncio.sleep(10)
+    return False
+
+
 async def _request_reward(file_id: int) -> None:
     """Requests a reward for a file.
 
@@ -186,21 +214,18 @@ async def _request_reward(file_id: int) -> None:
     """
     wallet = get_wallet()
     chain_manager = get_chain_manager()
-    with open(dlp_abi_path) as f:
-        dlp_contract = chain_manager.web3.eth.contract(
-            address=DLP_ADDRESS, abi=json.load(f)
-        )
+    dlp_contract = get_dlp_contract()
     request_reward_fn = dlp_contract.functions.requestReward(file_id, 1)
-    tx = None
-    retry_count = 0
-    while tx is None:
-        tx = chain_manager.send_transaction(request_reward_fn, wallet.hotkey)
-        logging.info("Waiting for file proof to be posted...")
-        await asyncio.sleep(10)
-        retry_count += 1
-        if retry_count > 6:
-            logging.error("Failed to request reward... proceeding to next file")
-            return
+    proof_posted = await _wait_for_file_proof(file_id)
+
+    if not proof_posted:
+        logging.error("Failed to wait for file proof... proceeding to next file")
+        return
+
+    if not GELATO_ENABLED:
+        chain_manager.send_transaction(request_reward_fn, wallet.hotkey)
+    else:
+        await send_request_reward_relay_request(dlp_contract, file_id)
 
 
 def _get_cookie_str() -> str:

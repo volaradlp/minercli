@@ -4,10 +4,13 @@ import os
 from eth_account import Account
 from dataclasses import dataclass
 
+from constants import NETWORK
+
 
 @dataclass
 class ChainConfig:
     network: str
+    chain_endpoint: str | None = None
 
 
 def get_wallet():
@@ -20,6 +23,8 @@ def get_wallet():
 
 def get_chain_manager():
     config = vana.Config()
-    config.chain = ChainConfig(network="moksha")
+    config.chain = ChainConfig(network=NETWORK)
+    if NETWORK == "vana":  # TODO: make this work with Vana lib
+        config.chain = ChainConfig(network="https://rpc.islander.vana.org")
     chain_manager = vana.ChainManager(config=config)
     return chain_manager

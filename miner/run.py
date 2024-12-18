@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import os
-import typing as T
 
 import miner.dlp.volara as volara
 from twitter.account import Account
