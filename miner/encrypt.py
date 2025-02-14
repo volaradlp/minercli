@@ -1,18 +1,21 @@
 import pgpy
+import random
+
+from coincurve import PrivateKey
 
 from pgpy.constants import CompressionAlgorithm, HashAlgorithm
-from ecies import encrypt
 from eth_account.messages import encode_defunct
 
 from constants import ENCRYPTION_SEED, VOLARA_DLP_OWNER_PUBLIC_KEY_HEX
+from miner.ecies_encryption import ecies_encrypt
 from miner.wallet import get_wallet
 
 
-def encrypt_with_public_key(message: str) -> bytes:
+def encrypt_with_public_key(message: str) -> tuple[bytes, PrivateKey, bytes]:
     """Encrypts a message with the Vana DLP owner's public key."""
     public_key = VOLARA_DLP_OWNER_PUBLIC_KEY_HEX
-    encrypted_message = encrypt(public_key, message.encode())
-    return encrypted_message
+    encrypted_message, ephemeral_sk, nonce = ecies_encrypt(public_key, message.encode())
+    return encrypted_message, ephemeral_sk, nonce
 
 
 def get_encryption_key() -> str:

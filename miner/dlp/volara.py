@@ -6,16 +6,16 @@ import logging
 import aiohttp
 from dataclasses import dataclass
 
+from coincurve import PrivateKey
+
 from constants import (
     BALANCE_ERROR_STRING,
-    DATA_REGISTRATION_ADDRESS,
-    DLP_ADDRESS,
-    TEE_POOL_ADDRESS,
     ENCRYPTION_SEED,
     VALIDATOR_IMAGE,
     VOLARA_API_KEY,
     VOLARA_DLP_OWNER_ADDRESS,
     GELATO_ENABLED,
+    VOLARA_DLP_OWNER_PUBLIC_KEY_HEX,
 )
 from miner.encrypt import encrypt_with_public_key, get_encryption_key
 from miner.dlp.gelato import (
@@ -47,9 +47,9 @@ async def submit(file_url: str) -> None:
     logging.info("Adding file...")
     file_id = await _add_file(file_url)
     logging.info("Adding file permission...")
-    await _add_file_permission(file_id)
+    ephemeral_sk, nonce = await _add_file_permission(file_id)
     logging.info("Submitting TEE request...")
-    await _submit_tee_request(file_id)
+    await _submit_tee_request(file_id, ephemeral_sk, nonce)
     logging.info("Requesting reward...")
     await _request_reward(file_id)
 
@@ -74,7 +74,7 @@ async def _add_file(file_url: str) -> int:
     return file_id
 
 
-async def _add_file_permission(file_id: int) -> None:
+async def _add_file_permission(file_id: int) -> tuple[PrivateKey, bytes]:
     """Adds a file permission to the Vana DLP implementation.
 
     Args:
@@ -84,21 +84,26 @@ async def _add_file_permission(file_id: int) -> None:
     chain_manager = get_chain_manager()
     data_registry_contract = get_data_registry_contract()
     encryption_key = get_encryption_key()
-    encrypted_symmetric_key = encrypt_with_public_key(encryption_key)
+    encrypted_symmetric_key, ephemeral_sk, nonce = encrypt_with_public_key(
+        encryption_key
+    )
     if not GELATO_ENABLED:
         add_file_permission_fn = data_registry_contract.functions.addFilePermission(
-            file_id, VOLARA_DLP_OWNER_ADDRESS, f"0x{encrypted_symmetric_key.hex()}"
+            file_id, VOLARA_DLP_OWNER_ADDRESS, encrypted_symmetric_key.hex()
         )
         tx = chain_manager.send_transaction(add_file_permission_fn, wallet.hotkey)
         if tx is None:
             raise Exception(BALANCE_ERROR_STRING)
     else:
         await send_add_file_permission_relay_request(
-            data_registry_contract, file_id, f"0x{encrypted_symmetric_key.hex()}"
+            data_registry_contract, file_id, encrypted_symmetric_key.hex()
         )
+    return ephemeral_sk, nonce
 
 
-async def _submit_tee_request(file_id: int) -> None:
+async def _submit_tee_request(
+    file_id: int, ephemeral_sk: PrivateKey, nonce: bytes
+) -> None:
     """Submits a request to the Vana DLP implementation.
 
     Args:
@@ -138,13 +143,15 @@ async def _submit_tee_request(file_id: int) -> None:
     tee_url = tees[1]
 
     try:
-        await send_tee_post(job_id, file_id, tee_url)
+        await send_tee_post(job_id, file_id, tee_url, ephemeral_sk, nonce)
     except Exception as e:
         logging.exception("Error sending TEE post!")
         raise e
 
 
-async def send_tee_post(job_id: int, file_id: int, tee_url: str) -> None:
+async def send_tee_post(
+    job_id: int, file_id: int, tee_url: str, ephemeral_sk: PrivateKey, nonce: bytes
+) -> None:
     """Sends a TEE post to the Vana DLP implementation.
 
     Args:
@@ -174,6 +181,14 @@ async def send_tee_post(job_id: int, file_id: int, tee_url: str) -> None:
                 "secrets": {
                     "VOLARA_API_KEY": VOLARA_API_KEY,
                 },
+                "validate_permissions": [
+                    {
+                        "address": VOLARA_DLP_OWNER_ADDRESS,
+                        "public_key": VOLARA_DLP_OWNER_PUBLIC_KEY_HEX,
+                        "iv": nonce.hex(),
+                        "ephemeral_key": ephemeral_sk.secret.hex(),
+                    }
+                ],
                 "nonce": random.randint(0, 2**16),
             },
             timeout=None,

@@ -30,6 +30,7 @@ def get_chain_manager():
     if NETWORK == "vana":  # TODO: make this work with Vana lib
         config.chain = ChainConfig(network="https://rpc.vana.org")
     chain_manager = vana.ChainManager(config=config)
-    chain_manager.web3 = Web3(Web3.HTTPProvider("https://rpc.vana.org"))
-    chain_manager.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+    if NETWORK == "vana":
+        chain_manager.web3 = Web3(Web3.HTTPProvider("https://rpc.vana.org"))
+        chain_manager.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
     return chain_manager
